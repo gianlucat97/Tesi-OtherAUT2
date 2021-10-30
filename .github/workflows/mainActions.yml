@@ -1,0 +1,296 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Github Actions Maven Build Example
+
+# Controls when the workflow will run
+on:
+  release:
+    types: [NOpublished]
+
+
+ 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: v0_3
+      DIR_FILE_FTL: /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/src/main/resources/templates/indexProdottiOriginaleNoHooks.ftl
+      FILE_POM_MAIN_PROJECT: /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/pom.xml
+      DIR_POM_MAIN_PROJECT: /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot
+      DIR_JAR_MAIN_PROJECT: /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/target
+      TEST_TO_EXECUTE: testSuiteHooks_release_1_0,testSuiteHooks2_release_1_0,testSuiteHooks3_release_1_0
+      DIR_SUREFIRE_REPORTS: /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/target/surefire-reports
+      
+      DIR_TEST_SUITE: /home/runner/work/WebAppTesi/WebAppTesi/TestSuite
+      NOME_TEST_SUITE: TestSuite
+      DIR_TEST_SUITE_HOOKS: /home/runner/work/WebAppTesi/WebAppTesi/TestSuite/TestSuiteHooks
+      NOME_TEST_SUITE_HOOKS: TestSuiteHooks
+      DIR_TEST_SUITE_HOOKS_STORICO: /home/runner/work/WebAppTesi/WebAppTesi/TestSuite/TestSuiteHooks/StoricoTest
+      NOME_TEST_SUITE_HOOKS_STORICO: StoricoTest
+      
+      INFO_COMMIT_TEST_SUITE: Test Suite Hooks Prova2 con Environment Variable
+      
+      REPORT_DIRECTORYNAME_WITH_PROJECT_VERSION: report_test_v1_1
+      
+      GITHUB_EMAIL: talitrogian2@gmail.com
+      GITHUB_NAME: gianlucat97
+      GITHUB_PASSWORD: Sharingan268
+      
+      
+      NOME_REPORT_FINALE: tabellaReportTest
+      
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Step 1 - Checkout main branch from GitHub
+        uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: Step 2 - Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+          
+      - name: Step 2.2 - View Environment Variable
+        run: |
+          echo "valore di DIR_FILE_FTL: "
+          echo " $DIR_FILE_FTL !"
+          
+      - name: Step 3 - Have GitHub Actions Build Maven Project
+        run: mvn -B package --file $FILE_POM_MAIN_PROJECT
+        
+      - name: Step 4 - List the current directory
+        run: |
+          ls -a
+          cd chromedriver_v94_linux64
+          readlink -f chromedriver
+
+       # Runs a set of commands using the runners shell
+      - name: Step 5 - Installare Node versione 10 in Ubuntu
+        run: |
+          sudo apt update
+          sudo apt -y install curl dirmngr apt-transport-https lsb-release ca-certificates
+          curl -sL https://deb.nodesource.com/setup_10.x | sudo bash
+          sudo apt install nodejs
+          
+          sudo npm cache clean -f
+          sudo npm install -g n
+          sudo n stable
+          sudo n 10.18.0
+          
+          echo "Versione di node: "
+          node -v
+          echo "Versione di npm: "
+          npm -v
+          
+          npm install
+          echo "Provo ad INSTALLARE bcrypt"
+          npm install bcrypt
+          npm fund
+          echo "vedi se ha fatto bene o no"
+          
+      - name: Step 6 - Unzip test-hooks ed installazione dentro test-guard di npm
+        run: | 
+          ls -a
+          unzip test-hooks.zip
+          cd test-hooks
+          ls -a
+          cd test-guard
+          ls -a
+          echo "Versione di node: "
+          node -v
+          echo "Versione di npm: "
+          npm -v
+          echo "Provo ad installare con npm install"
+          npm install
+          ls -a
+          npm audit fix
+          echo "Provo ad INSTALLARE bcrypt"
+          npm install bcrypt
+          npm fund
+          echo "vedi se ha fatto bene o no"
+    
+      - name: Step 7 - Ottieni path file ftl da modificare con gli Hooks
+        run: |
+            cd WebAppHooks/catalogoProdottiBoot/src/main/resources/templates
+            ls -a
+            echo "Il path completo del file ftl da modificare è: "
+            readlink -f indexProdottiOriginaleNoHooks.ftl
+            echo "Vediamo il contenuto del file ftl prima della modifica"
+            cat indexProdottiOriginaleNoHooks.ftl
+              
+        
+      - name: Step 8 - Instrumenta l'applicazione iniettando gli Hooks
+        run: |
+            cd test-hooks
+            cd test-guard
+            ls -a
+            echo "Visualizzazione file ftl prima dell injection! "
+            cat $DIR_FILE_FTL
+            echo "Visualizza versione di node"
+            node -v
+            echo "... Cancellazione e successivo aggiornamento di node_modules ..."
+            rm -rf node_modules/
+            npm update
+            echo "INJECTION adesso..."
+            echo "Visualizza versione di node"
+            node -v
+            node main.js inject-hooks $DIR_FILE_FTL --grammar freemarker
+            echo "Visualizzazione file ftl dopo l'injection!!! "
+            cat $DIR_FILE_FTL
+          
+          
+      - name: Step 9 - Esegui Applicazione Spring Boot tramite jar
+        run:  |
+            cd $DIR_JAR_MAIN_PROJECT
+            java -jar catalogoProdottiBoot-0.0.1-SNAPSHOT.jar &
+            echo "Vediamo se si è attivato il thread che fa andare avanti"
+          
+      - name: Step 10 - Install Chrome Headless
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade
+          sudo apt-get -u dist-upgrade
+          sudo apt-get install -y libappindicator1 fonts-liberation
+          sudo apt-get -y install dbus-x11 xfonts-base xfonts-100dpi xfonts-75dpi xfonts-scalable
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get -f install
+          google-chrome-stable --headless --disable-gpu 
+          
+          
+      - name: Step 11 - Install Chrome Driver test maven
+        run:  |
+            wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip
+            unzip chromedriver_linux64.zip
+            sudo mv chromedriver /home/runner/work/WebAppTesi/WebAppTesi/chromedriver_v94_linux64/chromedriver
+            sudo chown root:root /home/runner/work/WebAppTesi/WebAppTesi/chromedriver_v94_linux64/chromedriver
+            sudo chmod +x /home/runner/work/WebAppTesi/WebAppTesi/chromedriver_v94_linux64/chromedriver
+
+
+      - name: Step 12 - Eseguire test maven
+        run:  |
+            cd $DIR_POM_MAIN_PROJECT
+            mvn -Dtest=$TEST_TO_EXECUTE  test site &
+            sleep 4m
+            
+      - name: Step 13 - Visualizzare report test
+        run: |
+            cd $DIR_SUREFIRE_REPORTS
+            ls -a 
+            echo "Visualizziamo adesso tutti i report ottenuti dalle nostre test suite"
+            cat *.txt
+            echo "Fine visualizzazione report!!!"
+            
+             
+      - name: Step 13.2 - Verifica Hooks su storico test
+        run:  |
+            cd test-hooks
+            cd test-guard
+            echo "Vengono rimossi gli hooks non utilizzati da alcun test"
+            node main.js remove-hooks /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/src/main/resources/templates/indexProdottiOriginaleNoHooks.ftl --grammar freemarker --suites /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/src/test/java/it/catalogo
+            echo "Prima del verify-hooks"
+            node main.js verify-hooks /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/src/main/resources/templates/indexProdottiOriginaleNoHooks.ftl --grammar freemarker --suites /home/runner/work/WebAppTesi/WebAppTesi/WebAppHooks/catalogoProdottiBoot/src/test/java/it/catalogo
+            echo "Dopo il verify-hooks!!! "
+            
+               
+            
+      - name: Step 14 - Creazione directories per report testing
+        run: |
+          ls -a
+          if [ ! -d "$DIR_TEST_SUITE" ]; then
+            echo "Vedi se sono dentro l'if numero 1"
+            sudo mkdir $NOME_TEST_SUITE
+          fi
+          echo "Vediamo se ha creato la cartella"
+          ls -a
+          cd $DIR_TEST_SUITE
+          if [ ! -d "$DIR_TEST_SUITE_HOOKS" ]; then
+            echo "Vedi se sono dentro l'if numero 2"
+            sudo mkdir $NOME_TEST_SUITE_HOOKS
+          fi
+          cd $DIR_TEST_SUITE_HOOKS
+          if [ ! -d "$DIR_TEST_SUITE_HOOKS_STORICO" ]; then
+            echo "Vedi se sono dentro l'if numero 3"
+            sudo mkdir $NOME_TEST_SUITE_HOOKS_STORICO
+          fi   
+       
+       
+      - name: Step 15 - Spostamento report in directory corretta
+        run: |  
+          cd $DIR_JAR_MAIN_PROJECT
+          echo "Visualizziamo se c'è la cartella surefire-reports"
+          ls -a 
+          echo "Rinominare la cartella surefire-reports in report_test_vx_x, dove al posto delle x va il numero della versione"
+          sudo mv surefire-reports $REPORT_DIRECTORYNAME_WITH_PROJECT_VERSION
+          echo "Vediamo se la ha rinominata:"
+          ls -a
+          sudo cp -r $REPORT_DIRECTORYNAME_WITH_PROJECT_VERSION $DIR_TEST_SUITE_HOOKS_STORICO
+          
+         
+          
+      - name: Step 16 - Push dei report
+        run: |
+          echo "Vediamo quali cartelle ci sono nella directory di partenza"
+          ls -a
+          git status
+          git config --global user.email "talitrogian2@gmail.com"
+          git config --global user.name "gianlucat97"
+          git config --global user.password "Sharingan268"
+          echo "Andiamo ad aggiungere la cartella dei report"
+          git add $DIR_TEST_SUITE
+          echo "Cartella aggiunta!"
+          git commit -m "$INFO_COMMIT_TEST_SUITE"
+          git branch -M v0_3
+          git push -u origin v0_3
+          
+      - name: Step 17 - Unzip progetto "Miglioramento report test"
+        run: |
+          ls 
+          echo "Unzip del progetto"
+          unzip miglioramentoReportTest.zip
+          echo "Progetto zippato"
+          ls 
+          
+          
+          
+      - name: Step 18 - Esecuzione progetto "Miglioramento report test"
+        run: |    
+          echo "Andiamo nella directory dove si trova il file jar eseguibile"
+          cd miglioramentoReportTest/target
+          ls -a
+          echo "Proviamo ad eseguire il file jar, passandogli come args[0] la directory dei report da analizzare e come args[1] il nome del report complessivo xls da generare"
+          java -jar miglioramentoReportTest-0.0.1-jarReportTest.jar $DIR_TEST_SUITE_HOOKS_STORICO/$REPORT_DIRECTORYNAME_WITH_PROJECT_VERSION $NOME_REPORT_FINALE
+          echo "File jar eseguito!!!"
+          echo "Vediamo il file xls di report unificato se c'è"
+          ls -a 
+          echo "Vediamo il contenuto del file xls di report unificato!!!"
+          cat $NOME_REPORT_FINALE.xls
+          
+      - name: Step 19 - Spostamento report xlsx in cartella dei report txt
+        run: | 
+          cd miglioramentoReportTest/target
+          sudo cp $NOME_REPORT_FINALE.xls $DIR_TEST_SUITE_HOOKS_STORICO/$REPORT_DIRECTORYNAME_WITH_PROJECT_VERSION
+          
+      - name: Step 20 - Commit del report xlsx
+        run: | 
+          echo "Vediamo quali cartelle ci sono nella directory di partenza"
+          ls -a
+          git status
+          git config --global user.email "$GITHUB_EMAIL"
+          git config --global user.name "$GITHUB_NAME"
+          git config --global user.password "$GITHUB_PASSWORD"
+          echo "Andiamo ad aggiungere la cartella dei report"
+          git add $NOME_TEST_SUITE
+          echo "Cartella aggiunta!"
+          git commit -m "$INFO_COMMIT_TEST_SUITE"
+          git branch -M $BRANCH_NAME
+          git push -u origin $BRANCH_NAME  
+        
+      
